@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jquery</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<style>
+    #form{
+        padding: 10px;
+        margin: 20px auto;
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    table{
+        width: 70%;
+        margin: 0 auto;
+    }
+    h1{text-align: center;}
+</style>
+<body>
+    <!-- <button onclick="handlePost()">Create</button>
+    <button onclick="handlePut()">Update</button>
+    <button onclick="handleDelete()">Delete</button> -->
+ 
+<!-- // thêm mới -->
+<button onclick="showForm()">Thêm mới +</button>
+<form id="form">
+    <input type="hidden" name="id" id="id" placeholder="id">
+    <input type="text" name="studentName" id="studentName" placeholder="StudentName">
+    <input type="text" name="address" id="address" placeholder="address">
+    <input type="number" min="0" name="age" id="age" placeholder="age">
+    <button type=" submit" id="submit"> Create</button>
+</form>
+<!-- danh sách -->
+<h1>Danh sách khách hàng</h1>
+
+<table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Name</th>
+            <th>Addess</th>
+            <th>Age</th>
+            <th colspan="2">Action</th>
+        </tr>
+
+    </thead>
+    <tbody id="display">
+        
+    </tbody>
+
+</table>
+    
+    <script>
+        let action = "Create"
+         $("#form").hide();
+        $(document).ready(function (){
+            // get
+           getAll();
+           $("#form").submit((e)=>{
+                e.preventDefault();
+                let id = $("#id").val();
+                let studentName= $("#studentName").val();
+                let address = $("#address").val();
+                let age= $("#age").val();
+                if(action==="Create"){
+                let newStudent = {studentName,age,address};
+                handlePost(newStudent)
+                }else if(action==="Update"){
+                    let dataPut = {id,studentName,age,address}
+                    handlePut(dataPut);
+                }
+                
+           })
+        });
+        // Show form
+        const showForm=()=>{
+            $("#form").toggle();
+        }
+
+        // findbyid 
+        const findById = (id)=>{
+           
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                   
+                },
+                url:`http://localhost:8080/api/students/${id}`,
+                type: 'GET',
+                success: function (data) {
+                
+                    action = "Update"
+                    $("#submit").text(action)
+                    $("#form").show();
+                    $("#id").val(data.id);
+                    $("#studentName").val(data.studentName);
+                    $("#address").val(data.address);
+                    $("#age").val(data.age);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+
+            })
+            }
+            //get all
+            const getAll = ()=>{
+                $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                   
+                },
+                url:'http://localhost:8080/api/students',
+                type: 'GET',
+                success: function (data) {
+                  let view = data.reduce((temp,cus,index)=>temp+`<tr>
+            <td>${index+1}</td>
+            <td>${cus.studentName}</td>
+            <td>${cus.address}</td>
+            <td>${cus.age}</td>
+            <td><button onclick="findById(${cus.id})">Edit</button></td>
+            <td><button onclick="handleDelete(${cus.id})">Delete</button></td>
+        </tr>`,'');
+                $("#display").html(view);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+
+            })
+            }
+            // reduce 
+            let arrr = [1,2,3,4,5,6];
+            let total = arrr.reduce((t,element)=>t+element,0);
+        // post
+        const handlePost = (dataPost)=>{
+                
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                   
+                },
+                url:'http://localhost:8080/api/students/create',
+                type: 'POST',
+                data:JSON.stringify(dataPost),
+                success: function (data) {
+                    console.log(data);
+                    getAll();
+                    $("#form").hide();
+                    resetForm();
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+
+            })
+            }
+            //put 
+            const handlePut = (dataPut)=>{
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                   
+                },
+                url:`http://localhost:8080/api/students/update/${dataPut.id}`,
+                type: 'PUT',
+                data:JSON.stringify(dataPut),
+                success: function (data) {
+                    action="Create";
+                    resetForm();
+                    $("#form").hide();
+                    getAll()
+                    $("#submit").text(action)
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+
+            })
+            }
+            const handleDelete= (id)=>{
+                
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                   
+                },
+                url:`http://localhost:8080/api/students/delete/${id}`,
+                type: 'Delete',
+                success: function (data) {
+                    getAll();
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+
+            })
+            }
+            const resetForm = ()=>{
+               $("#studentName").val("");
+               $("#address").val("");
+               $("#age").val("");
+            }
+
+
+    </script>
+
+</body>
+</html>
